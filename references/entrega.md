@@ -107,6 +107,21 @@ A estratégia casa com o risco:
   merge em `high`/`critical` (`resiliencia.md` § supply-chain).
 - **Cada deploy grava rastro** no archive (§28): commit, artefato, quem aprovou, resultado.
 
+## 8. Deploy SOMENTE do git — pisos 22 e 23 (`schematize-engineering`)
+
+Base normativa: `schematize-engineering` → `assets/CLAUDE.md` pisos 22-24 e `references/ops.md`.
+
+- **Piso 22 — tudo vai pro git.** Sem remote acessível (GitHub/GitLab/similar), sem push feito e
+  sem `HEAD == origin/<branch>`, **a demanda não se conclui** (trava de conclusão). Código que só
+  existe na máquina não tem como ser deployado.
+- **Piso 23 — o deploy nasce do git, nunca da máquina.** **VETADO** enviar código da máquina para a
+  VPS: `scp`, `rsync`, `tar | ssh`, `docker save | load`, editar remoto. Quem **clona/atualiza a
+  partir do git** é o **`<projeto>_ops` rodando na própria VPS**, e ele **verifica o SHA/tag
+  exato** (o que o gate aprovou) antes de subir; SHA diferente do pedido = aborta. Deploy,
+  `redeploy`, `update` e `rollback` (artefato/SHA anterior) são operações nomeadas do ops.
+- Hotfix idem: branch → git → ops puxa. "Copiei o arquivo pra lá" é o anti-padrão.
+
 > Regra de bolso: **promova, não copie.** Um artefato imutável, provado no CI, sobe por estágios
 > com portão onde a casa quer olhar (prd, front). Nada pula etapa; nada é editado no servidor;
 > rollback é voltar pro artefato anterior — nunca mexer na mão.
+> E o artefato **só chega ao servidor por pull do git feito pelo ops** — nunca por push da máquina.

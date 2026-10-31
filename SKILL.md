@@ -149,6 +149,17 @@ Independente do reference, estes limites nunca são cruzados:
     com utilidade zero. Não tem undo. Camada faltando é **bug de infra**, não descuido de quem rodou.
     Detalhe: `iac-efeitos-externos.md` §7, `segredos.md` §7, `observabilidade.md` §9.
 
+11. **Tudo vai pro git; deploy SOMENTE do git (pisos 22-23 da `schematize-engineering`).** Sem remote
+    acessível, push feito e `HEAD == origin`, a demanda não se conclui. **VETADO** `scp`, `rsync`,
+    `tar|ssh`, `docker save|load` e editar remoto: o **ops, rodando na VPS**, clona/atualiza do git e
+    verifica o **SHA/tag exato**. Detalhe: `entrega.md` §8.
+12. **O ops é o GATE da IA (piso 24).** A IA não altera a VPS direto — exceto `unattended-upgrades`/
+    `apt` e o mínimo (`git`) para clonar o ops; depois só conversa com o ops, por **operações
+    nomeadas e tipadas**, sem SQL/script/comando mutável próprio e **sem ssh mutável**. O ops tem
+    guardrails auditáveis, interface completa (logs, status, métricas, config mascarada, drift vs
+    git, banco só-leitura por query nomeada) e, se falta comando, ele é **implementado no repo do ops
+    via git**. Break-glass é humano e auditado, nunca da IA. Detalhe: `isolamento.md` §7.
+
 ## Precedência e herança (leia antes de divergir)
 
 <!-- herdado:engineering/precedencia:dominio intro="Esta skill é o recorte **infra/SRE** (isolamento, deploy gated, segredos, backup/DR) da `schematize-engineering`, agnóstico de linguagem: ela opera o serviço de qualquer stack do rol." cmd="infra" -->Esta skill é o recorte **infra/SRE** (isolamento, deploy gated, segredos, backup/DR) da `schematize-engineering`, agnóstico de linguagem: ela opera o serviço de qualquer stack do rol.

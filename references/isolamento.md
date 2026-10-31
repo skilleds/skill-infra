@@ -109,6 +109,28 @@ Espelhando a contenção de workspace da engenharia (ops.md §2):
   não são independentes. O ops **expõe** a colisão; a correção real é feita (cada serviço sobe
   sozinho, com degradação graciosa) — **não** se serializa pra mascarar (ops.md §6).
 
+## 7. Modelo de acesso da IA à VPS — piso 24 (`schematize-engineering`)
+
+O ops é o **GATE da IA**. Normativa: `schematize-engineering` → `assets/CLAUDE.md` piso 24 e
+`references/ops.md`; aqui está o que a infra provê.
+
+- **A IA é VETADA de alterar a VPS diretamente**, com **duas exceções**: **(a)** atualizações
+  automáticas do SO (`unattended-upgrades`/`apt`) e **(b)** instalar o **mínimo para rodar o ops**
+  (`git`) e fazer o **`git clone` do ops**. Terminado o bootstrap, a IA conversa **só com o ops
+  dentro da VPS**: usa **operações nomeadas e tipadas**; **nunca** escreve SQL, script ou comando
+  mutável próprio. **Sem `ssh` mutável** para a IA.
+- **Guardrails auditáveis do ops:** allowlist tipada e deny-by-default · dry-run/`plan` · confirmação
+  humana para destrutivo · rate-limit/blast radius · escopo por ambiente · identidade
+  **agente ≠ humano** · log **append-only** · kill-switch · rollback.
+- **Interface completa (leitura):** `logs`, `status`/`health`, métricas, info de sistema, `config`
+  com **segredo mascarado**, **drift vs git**, consulta de banco **SOMENTE-LEITURA** por queries
+  **nomeadas** (nunca SQL livre). **Escrita:** `deploy`/`rollback`/`restart`/`migrate`/`backup`/
+  `restore`/rotacionar segredo.
+- **Falta comando → implementa no repo do ops, via git** (PR, review, deploy do ops por pull) —
+  **nunca contorna por ssh**.
+- **Break-glass humano** auditado existe (acesso de emergência, com registro de quem/por quê/quando);
+  **nunca para a IA**. Uso gera achado e entra no postmortem.
+
 > Regra de bolso: **um serviço, um user, um unit hardened, um container não-root, uma fatia de
 > rede.** Se um serviço cai comprometido, o estrago para nele. Isolamento é o que transforma "um
 > serviço furado" em "um incidente contido" em vez de "o host inteiro é do atacante".

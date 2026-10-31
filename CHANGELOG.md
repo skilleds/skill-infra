@@ -4,6 +4,22 @@ Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https:
 com versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 
+## [0.8.0] — 2026-10-31
+Alinha a skill aos pisos 22-24 da `schematize-engineering` (referenciados, não duplicados).
+
+### Adicionado
+- `references/entrega.md` §8: tudo vai pro git (trava de conclusão) e deploy SOMENTE do git; VETADO
+  `scp`/`rsync`/`tar|ssh`/`docker save|load`/editar remoto; o ops na VPS clona/atualiza e verifica SHA/tag.
+- `references/isolamento.md` §7: modelo de acesso da IA à VPS (bootstrap mínimo + ops como gate),
+  guardrails e interface completa do ops, falta de comando vira PR no repo do ops, break-glass humano.
+- Pisos 11 e 12 em `SKILL.md` e `assets/CLAUDE.md`; `/infra-deploy` (§3b) e `/infra-check` cobram
+  "SHA do git", "IA sem ssh mutável" e "ops com auditoria".
+
+### Mantido (piso inalterado)
+- Pisos 1-10, gates e scripts; `description` inalterada.
+
+## [0.7.1]
+
 ## [0.7.1] — 2026-10-14
 Ponteiro para a skill nova `schematize-bots` (piso curto, sem duplicar).
 

@@ -25,6 +25,14 @@ local", "editei no prd", "hml recebeu o que não passou no CI").
 inclui o commit; o deploy só aceita origem git. Build **só no CI**. Config por ambiente vem do
 seed/cofre no deploy, **não** embutida na imagem.
 
+## 3b. Deploy só do git, ops como gate (`entrega.md` §8, `isolamento.md` §7)
+Cobre e reprova se faltar: **(a) SHA do git** — o deploy informa o SHA/tag exato e o ops, na VPS,
+verifica; HEAD==origin e push feito (piso 22); **(b) vetado** `scp`/`rsync`/`tar|ssh`/`docker
+save|load`/edição remota (piso 23) — grep no pipeline/scripts/histórico de comandos; **(c) IA sem
+ssh mutável** — só bootstrap mínimo (`git`+clone do ops) e depois o ops; **(d) ops com auditoria** —
+log append-only, agente≠humano, dry-run/plan, confirmação humana p/ destrutivo, kill-switch,
+rollback (piso 24).
+
 ## 4. Imagem e orquestração (§4-§5)
 - Imagem: **multi-stage**, base **pinada por digest** (`@sha256`, nunca `latest`), **não-root/
   read-only/`drop ALL`**, healthcheck; **SBOM** versionado, scan que trava, **assinada + verificada
