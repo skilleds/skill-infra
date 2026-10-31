@@ -38,7 +38,7 @@ unzip skill-infra.zip -d .claude/skills/
 
 ## O que tem dentro
 
-- **SKILL.md** — o contrato: 10 pisos inegociáveis (isolamento por app, deny-by-default,
+- **SKILL.md** — o contrato: 12 pisos inegociáveis (isolamento por app, deny-by-default,
   infra é código, deploy gated, segredo fora do repo, observabilidade integrada, backup com
   restore testado, cadeia de suprimentos, tudo auditado) + mapa de references.
 - **references/** — `isolamento` (user Linux + systemd hardened + container por serviço, blast
