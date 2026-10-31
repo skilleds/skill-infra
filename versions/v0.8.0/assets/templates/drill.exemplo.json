@@ -1,0 +1,14 @@
+{
+  "schema": "schematize-infra/drill@1",
+  "dado": "pedidos",
+  "_comentario": "Copie para o repo do servico. Os comandos sao SEUS: a skill nao sabe seu banco, e nao deve saber.",
+  "rpo_minutos": 60,
+  "rto_minutos": 30,
+  "relatorios": "../projeto_archive/infra/drills",
+  "canario": "pedido-canario-do-drill",
+  "comandos": {
+    "backup_mais_recente": "ls -1t /var/backups/pedidos/*.dump | head -1",
+    "restaurar": "docker compose -f dr/compose.yml up -d --wait db-limpo && pg_restore --clean --if-exists -d \"$DR_DATABASE_URL\" \"$BACKUP\"",
+    "verificar": "psql -tA -d \"$DR_DATABASE_URL\" -c \"select 1 from pedidos where referencia = '$CANARIO'\" | grep -q 1"
+  }
+}

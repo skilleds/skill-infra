@@ -3,7 +3,7 @@ name = "schematize-infra"
 tag = "Disciplina · Infra/DevOps/SRE"
 status = "beta"
 order = 24
-current_version = "0.7.1"
+current_version = "0.8.0"
 href = "/infra"
 
 [descriptions]
