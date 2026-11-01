@@ -1,0 +1,12 @@
+slug = "infra"
+name = "schematize-infra"
+tag = "Disciplina · Infra/DevOps/SRE"
+status = "beta"
+order = 24
+current_version = "0.9.0"
+href = "/infra"
+
+[descriptions]
+pt = "Infra/DevOps/SRE da casa: opera sistema em produção com blast radius mínimo — isolamento por app (user Linux + systemd hardened + container por serviço), IaC declarativa/idempotente/revisável, deploy GATED (nada pula etapa; front manual/gated), segredo nunca no repo (cofre + rotação), observabilidade integrada (SLO/alertas), backup & DR com RESTORE testado, redes/TLS/hardening deny-by-default e supply-chain (SBOM/pinning/assinatura). Deny-by-default, least-privilege, tudo auditado."
+en = "House Infra/DevOps/SRE: run production with minimal blast radius — per-app isolation (dedicated Linux user + hardened systemd + container per service), declarative/idempotent/reviewable IaC, GATED deploy (nothing skips a stage; front is manual/gated), secrets never in the repo (vault + rotation), built-in observability (SLO/alerts), backup & DR with TESTED restore, deny-by-default networking/TLS/hardening, and supply-chain (SBOM/pinning/signing). Deny-by-default, least-privilege, everything audited."
+es = "Infra/DevOps/SRE de la casa: operar producción con radio de impacto mínimo — aislamiento por app (usuario Linux dedicado + systemd endurecido + contenedor por servicio), IaC declarativa/idempotente/revisable, deploy GATED (nada salta etapa; el front es manual/gated), secretos nunca en el repo (bóveda + rotación), observabilidad integrada (SLO/alertas), backup y DR con restore PROBADO, redes/TLS/hardening deny-by-default y cadena de suministro (SBOM/pinning/firma). Deny-by-default, mínimo privilegio, todo auditado."
