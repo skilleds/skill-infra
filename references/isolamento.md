@@ -138,14 +138,14 @@ onde o §7 segue integral; não em prd). Ponte direta (`rsync`/`scp`/`ssh`) é p
 build/teste, dentro do workspace remoto (ex.: `/var/tmp/schematize-build/<projeto>/`). Para que a
 máquina não vire ponto cego nem derrube o vizinho:
 
-- **Usuário dedicado de build** (ex.: `schematize-build`), sem shell de login interativo p/ humanos,
+- **Usuário dedicado de build** (ex.: `ci-build`), sem shell de login interativo p/ humanos,
   sem sudo, **sem acesso a segredo, dado ou volume de prd** (a máquina não os tem; policy do cofre
   nega o path). Workspace próprio, `umask 077`; efeito externo real bloqueado (egress SMTP/PSP,
   piso 10).
 - **Cgroups/systemd slices:** builds rodam em `build.slice` (ou `systemd-run --slice=build.slice
   --scope`) com `CPUQuota=` (ex.: 300%), `MemoryMax=`/`MemoryHigh=`, `IOWeight=` baixo (ex.: 50),
   `TasksMax=` — o build satura a fatia, não a máquina nem os serviços de dev/hml vizinhos.
-- **Limpeza agendada:** `schematize-build-clean.service` + `.timer` (`OnCalendar=daily`,
+- **Limpeza agendada:** `build-clean.service` + `.timer` (`OnCalendar=daily`,
   `Persistent=true`, `RandomizedDelaySec`) que roda **somente** a higiene do piso 29 (builds inúteis
   e caches; escopo = workspace + allowlist; nunca dado persistente), com `User=` de build e unit
   hardened (`ProtectSystem=strict`, `ReadWritePaths=` só o workspace). Política do projeto decide:
