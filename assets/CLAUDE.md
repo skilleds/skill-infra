@@ -63,12 +63,16 @@ agir — não trabalhe de memória. Segurança **ofensiva** (provar que fechou) 
 11. **Tudo vai pro git; deploy SOMENTE do git (pisos 22-23).** Sem remote acessível e `HEAD ==
     origin`, a demanda não conclui. **VETADO** `scp`/`rsync`/`tar|ssh`/`docker save|load`/editar
     remoto; o **ops, na VPS**, clona/atualiza do git e verifica o **SHA/tag exato**
-    (`entrega.md` §8).
+    (`entrega.md` §8). **Única exceção, ESCOPADA (piso 29):** a máquina de **build/teste dev/hml**
+    (`entrega.md` §8.1) aceita ponte direta, só p/ build/teste, no workspace remoto de build; o que
+    sai dela **não é artefato promovível**. Continua vetado: prd, deploy/promoção por ponte, dado,
+    volume, `.env` e segredo de prd, efeito externo real.
 12. **O ops é o GATE da IA (piso 24).** A IA só altera a VPS por `unattended-upgrades`/`apt` e pelo
     mínimo (`git`) para clonar o ops; depois conversa **só com o ops** (operações nomeadas e
     tipadas; sem SQL/script/comando mutável próprio; **sem ssh mutável**). Falta comando →
     implementa no repo do ops via git, nunca contorna por ssh. Break-glass: humano e auditado,
-    nunca da IA (`isolamento.md` §7).
+    nunca da IA (`isolamento.md` §7). O piso 29 **não alarga** este: a ponte vale na máquina de
+    build/teste dev/hml (`isolamento.md` §7.1), nunca no ambiente de implantação nem em prd.
 
 ## Como se opera aqui
 

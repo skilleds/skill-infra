@@ -4,6 +4,26 @@ Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https:
 com versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 
+## [0.9.0] — 2026-11-01
+Alinha a skill ao piso 29 da `schematize-engineering` v0.34.0 (referenciado, não duplicado): máquina
+de build/teste dev/hml com ponte direta ESCOPADA.
+
+### Adicionado
+- `references/entrega.md` §8.1: separa "máquina de build/teste dev/hml (ponte direta permitida)" de
+  "ambiente de implantação (deploy só do git via ops)"; build por ponte não é artefato promovível;
+  higiene obrigatória (dry-run por padrão, workspace+allowlist, disco antes/depois).
+- `references/isolamento.md` §7.1: usuário de build sem segredo de prd, `build.slice` (CPUQuota/
+  MemoryMax/IOWeight), timer systemd de limpeza (dry-run+aviso ou apply), alerta de disco > 80%.
+- `/infra-deploy` §3c e `/infra-check` cobram "build testado na dev/hml quando existe", "higiene
+  feita" e "artefato promovido vem do git, não do build por ponte".
+
+### Alterado
+- Pisos 11 e 12 (`SKILL.md`, `assets/CLAUDE.md`) citam a exceção escopada do piso 29, sem alargá-los
+  e explicitando o que segue vetado (prd, promoção por ponte, dado/segredo de prd, efeito externo).
+
+### Mantido
+- Demais pisos, gates e scripts; `description` inalterada.
+
 ## [0.8.0] — 2026-10-31
 Alinha a skill aos pisos 22-24 da `schematize-engineering` (referenciados, não duplicados).
 

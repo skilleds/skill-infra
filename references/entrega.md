@@ -121,6 +121,26 @@ Base normativa: `schematize-engineering` → `assets/CLAUDE.md` pisos 22-24 e `r
   `redeploy`, `update` e `rollback` (artefato/SHA anterior) são operações nomeadas do ops.
 - Hotfix idem: branch → git → ops puxa. "Copiei o arquivo pra lá" é o anti-padrão.
 
+### 8.1 Máquina de build/teste dev/hml × ambiente de implantação — piso 29
+
+Dois papéis que não se misturam (base: `schematize-engineering` piso 29 e `references/ops.md`):
+
+| | **Máquina de build/teste (dev/hml)** | **Ambiente de implantação** |
+|---|---|---|
+| Existe se | o projeto TEM máquina dev e/ou hml (**hml**, não staging) | sempre (hml/prd) |
+| Ponte direta (`rsync`/`scp`/`ssh`) | **PERMITIDA**, só p/ build/teste, só no workspace remoto de build (ex.: `/var/tmp/schematize-build/<projeto>/`) | **VETADA** (pisos 23-24) |
+| Deploy/promoção | **nunca sai daí** | **só do git**: `commit+push` + build limpo do git via ops |
+| Agente | EVITA buildar local; usa essa máquina p/ build e teste de tudo que for possível | só conversa com o ops |
+
+- Sem máquina dev/hml, o build é local. **NUNCA prd** como máquina de build.
+- O que foi construído por ponte **NÃO é artefato promovível**: promoção a hml/prd = commit+push +
+  build limpo do git, feito pelo ops (pisos 23/24). Imagem, binário ou tarball vindos da ponte
+  não entram em `deploy`/`promote`.
+- Continuam vetados lá: dado/volume/`.env`/segredo de prd e efeito externo real.
+- **Higiene após cada ciclo (local e remoto):** apagar builds inúteis e caches — **dry-run por
+  padrão**, escopo = workspace + allowlist, **nunca** dado persistente — medindo disco antes/depois.
+  O isolamento e a limpeza agendada da máquina estão em `isolamento.md` §7.1.
+
 > Regra de bolso: **promova, não copie.** Um artefato imutável, provado no CI, sobe por estágios
 > com portão onde a casa quer olhar (prd, front). Nada pula etapa; nada é editado no servidor;
 > rollback é voltar pro artefato anterior — nunca mexer na mão.

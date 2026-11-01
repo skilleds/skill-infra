@@ -131,6 +131,30 @@ O ops é o **GATE da IA**. Normativa: `schematize-engineering` → `assets/CLAUD
 - **Break-glass humano** auditado existe (acesso de emergência, com registro de quem/por quê/quando);
   **nunca para a IA**. Uso gera achado e entra no postmortem.
 
+### 7.1 Máquina de build/teste dev/hml — isolamento de recursos (piso 29)
+
+A exceção do piso 29 vale **só** na máquina de build/teste dev/hml (não no ambiente de implantação,
+onde o §7 segue integral; não em prd). Ponte direta (`rsync`/`scp`/`ssh`) é permitida só p/
+build/teste, dentro do workspace remoto (ex.: `/var/tmp/schematize-build/<projeto>/`). Para que a
+máquina não vire ponto cego nem derrube o vizinho:
+
+- **Usuário dedicado de build** (ex.: `schematize-build`), sem shell de login interativo p/ humanos,
+  sem sudo, **sem acesso a segredo, dado ou volume de prd** (a máquina não os tem; policy do cofre
+  nega o path). Workspace próprio, `umask 077`; efeito externo real bloqueado (egress SMTP/PSP,
+  piso 10).
+- **Cgroups/systemd slices:** builds rodam em `build.slice` (ou `systemd-run --slice=build.slice
+  --scope`) com `CPUQuota=` (ex.: 300%), `MemoryMax=`/`MemoryHigh=`, `IOWeight=` baixo (ex.: 50),
+  `TasksMax=` — o build satura a fatia, não a máquina nem os serviços de dev/hml vizinhos.
+- **Limpeza agendada:** `schematize-build-clean.service` + `.timer` (`OnCalendar=daily`,
+  `Persistent=true`, `RandomizedDelaySec`) que roda **somente** a higiene do piso 29 (builds inúteis
+  e caches; escopo = workspace + allowlist; nunca dado persistente), com `User=` de build e unit
+  hardened (`ProtectSystem=strict`, `ReadWritePaths=` só o workspace). Política do projeto decide:
+  **dry-run + aviso** (default; lista o que apagaria e o espaço liberável) ou **apply**. Mede disco
+  antes/depois e registra no log/archive.
+- **Alerta de disco > 80%** no filesystem do workspace (e de `/var/tmp`): alerta versionado
+  (`observabilidade.md`) que dispara a limpeza em dry-run+aviso e pagina se persistir.
+- Nada disso é artefato de deploy: a imagem/binário de lá não é promovível (`entrega.md` §8.1).
+
 > Regra de bolso: **um serviço, um user, um unit hardened, um container não-root, uma fatia de
 > rede.** Se um serviço cai comprometido, o estrago para nele. Isolamento é o que transforma "um
 > serviço furado" em "um incidente contido" em vez de "o host inteiro é do atacante".

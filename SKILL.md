@@ -152,13 +152,17 @@ Independente do reference, estes limites nunca são cruzados:
 11. **Tudo vai pro git; deploy SOMENTE do git (pisos 22-23 da `schematize-engineering`).** Sem remote
     acessível, push feito e `HEAD == origin`, a demanda não se conclui. **VETADO** `scp`, `rsync`,
     `tar|ssh`, `docker save|load` e editar remoto: o **ops, rodando na VPS**, clona/atualiza do git e
-    verifica o **SHA/tag exato**. Detalhe: `entrega.md` §8.
+    verifica o **SHA/tag exato**. **Exceção ESCOPADA (piso 29):** na máquina de build/teste dev/hml
+    (se o projeto tem) a ponte direta é permitida, só p/ build/teste e dentro do workspace remoto de
+    build; o resultado **não é promovível**. Segue vetado: prd, promoção por ponte, dado/volume/
+    `.env`/segredo de prd, efeito externo real. Detalhe: `entrega.md` §8 e §8.1.
 12. **O ops é o GATE da IA (piso 24).** A IA não altera a VPS direto — exceto `unattended-upgrades`/
     `apt` e o mínimo (`git`) para clonar o ops; depois só conversa com o ops, por **operações
     nomeadas e tipadas**, sem SQL/script/comando mutável próprio e **sem ssh mutável**. O ops tem
     guardrails auditáveis, interface completa (logs, status, métricas, config mascarada, drift vs
     git, banco só-leitura por query nomeada) e, se falta comando, ele é **implementado no repo do ops
-    via git**. Break-glass é humano e auditado, nunca da IA. Detalhe: `isolamento.md` §7.
+    via git**. Break-glass é humano e auditado, nunca da IA. O piso 29 **não alarga** este piso: a ponte é só na
+    máquina de build/teste dev/hml. Detalhe: `isolamento.md` §7 e §7.1.
 
 ## Precedência e herança (leia antes de divergir)
 

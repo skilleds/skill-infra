@@ -33,6 +33,14 @@ ssh mutável** — só bootstrap mínimo (`git`+clone do ops) e depois o ops; **
 log append-only, agente≠humano, dry-run/plan, confirmação humana p/ destrutivo, kill-switch,
 rollback (piso 24).
 
+## 3c. Máquina de build/teste dev/hml e higiene (`entrega.md` §8.1, piso 29)
+Cobre e reprova se faltar: **(a) build testado na máquina dev/hml quando ela existe** (sem ela, build
+local); **(b) artefato promovido vem do git, não do build por ponte** — o SHA promovido foi
+construído limpo do git pelo ops; imagem/binário vindos de `rsync`/`scp`/`ssh` no workspace de build
+**não são promovíveis**; **(c) higiene feita** — builds inúteis e caches apagados (dry-run por
+padrão, escopo workspace+allowlist, nunca dado persistente), disco medido antes/depois, local e
+remoto; **(d)** ponte só no workspace de build, **nunca prd**, sem dado/`.env`/segredo de prd.
+
 ## 4. Imagem e orquestração (§4-§5)
 - Imagem: **multi-stage**, base **pinada por digest** (`@sha256`, nunca `latest`), **não-root/
   read-only/`drop ALL`**, healthcheck; **SBOM** versionado, scan que trava, **assinada + verificada

@@ -46,6 +46,14 @@ bootstrap mínimo + ops) · **"ops com auditoria"** (allowlist tipada, dry-run, 
 destrutivo, log append-only, agente≠humano, kill-switch, rollback, leitura de banco só por query
 nomeada). Violação é achado, não nota.
 
+## Máquina de build/teste dev/hml (piso 29)
+
+Cobre à mão (`references/entrega.md` §8.1, `references/isolamento.md` §7.1): **"build testado na
+máquina dev/hml quando existe"** · **"higiene feita"** (builds/caches apagados, dry-run por padrão,
+disco antes/depois) · **"artefato promovido vem do git, não do build por ponte"** · usuário de
+build sem segredo de prd, `build.slice` com `CPUQuota`/`MemoryMax`/`IOWeight`, timer de limpeza e
+alerta de disco > 80%. Ponte fora do workspace de build, ou em prd, é achado.
+
 ## Resiliência
 
 O gate de `references/resiliencia.md` é o **`/infra-drill`** — restore provado, com canário e
