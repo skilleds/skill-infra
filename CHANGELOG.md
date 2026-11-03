@@ -4,7 +4,7 @@ Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https:
 com versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 
-## [Não lançado]
+## [0.10.0] — 2026-11-03
 ### Corrigido
 - P0-4 `references/resiliencia.md` §7: o exemplo de chaos deixou de usar `systemctl stop/start`; agora é
   experimento versionado executado por **operação tipada do ops** (`ops chaos run`) com `ttl`, allowlist,
