@@ -52,11 +52,12 @@ sem comando nem gate. Agora:
 
 | Artefato | Cobre | Reprova quando |
 |---|---|---|
-| `scripts/dr-drill.sh` | `resiliencia.md` §1 | sem backup · backup mais velho que o RPO · restore falhou · **canário ausente com restore "bem-sucedido"** · RTO estourado (medido em segundos, para que RTO=0 não passe) |
+| `scripts/dr-drill.sh` (operação do ops: `ops drill`; sem `eval`; idade por arquivo **ou manifesto**; relatório com commit+push e `custos`) | `resiliencia.md` §1 | sem backup · backup mais velho que o RPO · restore falhou · **canário ausente com restore "bem-sucedido"** · RTO estourado (medido em segundos, para que RTO=0 não passe) |
 | `scripts/dr-drill.sh --frescor` | idem | nenhum relatório (restore **nunca** provado) · último drill velho demais · último drill reprovado |
-| `scripts/check-isolamento.sh` | `isolamento.md` | unit sem `User=` ou com root · sem hardening · `Dockerfile` sem `USER` · banco com `ports:` publicado · **repo sem artefato nenhum** (exit 2) |
+| `scripts/check-isolamento.sh` | `isolamento.md` | unit sem `User=` ou com root · sem hardening · **Dockerfile/compose: chama os gates da `schematize-docker`** (mínimo local + aviso se ausente) · **repo sem artefato nenhum** (exit 2) |
+| `scripts/check-deploy-git.sh` | `entrega.md` §8 (pisos 22/23) | `scp`/`rsync`/`tar\|ssh`/`docker save\|load`/ssh mutável em pipeline, Makefile, `*.sh` e blocos de runbook `.md` · árvore suja/sem push · **delega ao gate da engineering** (exit 2 se ausente) |
 | `scripts/check-observabilidade.sh` | `observabilidade.md` | sem liveness/readiness · **readiness apelido do liveness** · PII/segredo em chamada de log |
-| `scripts/dr-drill.test.sh` · `scripts/check-gates.test.sh` · `scripts/check-isolamento.test.sh` · `scripts/check-observabilidade.test.sh` | os gates | casos vermelhos plantados de propósito (um arquivo de teste por gate) |
+| `scripts/dr-drill.test.sh` · `scripts/check-deploy-git.test.sh` · `scripts/check-gates.test.sh` · `scripts/check-isolamento.test.sh` · `scripts/check-observabilidade.test.sh` | os gates | casos vermelhos plantados de propósito (um arquivo de teste por gate) |
 
 ## Como usar esta skill
 
@@ -71,7 +72,7 @@ sem comando nem gate. Agora:
    deploya manual na Vercel). Container não-root/read-only/distroless; healthcheck gating +
    rollback automatizado.
 4. **Guarde o segredo fora** (`references/segredos.md`): nunca no repo, nunca em layer, nunca em
-   `.env` commitado — cofre + rotação + secret scan que trava o merge.
+   `.env` commitado — cofre + rotação + secret scan que trava a promoção (gate local por commit).
 5. **Enxergue o sistema** (`references/observabilidade.md`): logs/métricas/traços correlacionados,
    SLO com error budget, alertas versionados (o critério de "pronto" está no piso 6).
 6. **Sobreviva ao desastre** (`references/resiliencia.md`): RPO/RTO definidos, **restore testado**;
@@ -115,7 +116,7 @@ Independente do reference, estes limites nunca são cruzados:
    mão no servidor; hotfix segue o mesmo trilho, acelerado.
 5. **Segredo nunca no repo.** Nunca em código, nunca em layer de imagem, nunca em `.env`
    commitado, nunca `NEXT_PUBLIC_`/`ARG`/`ENV` persistido. Cofre (Vault / Secret Manager /
-   sealed-secrets) + **rotação documentada** + **secret scan que trava o merge**. Segredo achado
+   sealed-secrets) + **rotação documentada** + **secret scan que trava a promoção** (local por commit; CI remoto na promoção). Segredo achado
    no rastro → **rotação imediata**, não "depois eu troco".
 6. **Observabilidade integrada, não posterior.** Todo serviço nasce com logs estruturados,
    métricas (RED/USE), traços correlacionados por `trace_id`, **SLO com error budget** e alertas
@@ -191,6 +192,8 @@ Independente do reference, estes limites nunca são cruzados:
 ## Orquestração
 
 <!-- herdado:engineering/orquestracao:curto -->**Orquestrador não desenvolve; subagent barato executa.** O agent principal só planeja, despacha e revisa; ação onerosa vira micro-tasks para o executor mais barato que resolve: `haiku` (mecânico) / `sonnet` (código; falhou → mesmo subagent corrige, até 2 rodadas) → Codex `gpt-5.6-terra` → Cursor → subagent `opus` (motivo) → `park`; **visual vai direto ao Codex**; **imagem nunca pelo Claude: detectar Codex/Gemini e perguntar ao usuário qual usar (Codex é a sugestão), nunca API de imagem paga**; papéis em `agentes.toml`. No overdev, cada item do checklist vai a um subagent e o principal revisa antes do `- [x]`. **Sem frota ociosa:** idle com pendência volta ao trabalho; dependente de outro agent → mata e enfileira com gatilho; terminou → mata (§9.6). Detalhe: `schematize-engineering` → `references/orquestracao.md` §9.<!-- /herdado -->
+
+Herda os pisos 22–29 da `schematize-engineering` (git como trava de conclusão, deploy só do git, ops é o gate da IA, sem agents inúteis, relatório 30 min/handoff 6 h, CI remoto só antes do hml, microserviço autônomo, build em dev/hml + higiene).
 
 ## Relação com as outras skills
 

@@ -4,6 +4,29 @@ Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https:
 com versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 
+## [Não lançado]
+### Corrigido
+- P0-4 `references/resiliencia.md` §7: o exemplo de chaos deixou de usar `systemctl stop/start`; agora é
+  experimento versionado executado por **operação tipada do ops** (`ops chaos run`) com `ttl`, allowlist,
+  auditoria, kill-switch e abort automático; ponte direta só na máquina dev/hml de build (piso 29).
+- P1-8 CI: `entrega.md`, `segredos.md`, `infra-drill.md`, `SKILL.md`, `assets/CLAUDE.md` e comandos trocam
+  "CI constrói sozinho / trava o merge" por gate local por commit + "trava a promoção"; nova `entrega.md` §9
+  com o gatilho padrão (`workflow_dispatch` + tags `hml-*`/`v*`, `concurrency`) e `check-ci-triggers.sh`.
+- P1-9 novo `scripts/check-deploy-git.sh` (+ teste vermelho->verde): reprova scp/rsync/tar|ssh/docker
+  save|load/ssh mutável em pipeline, Makefile, `*.sh` e blocos de código de runbook `.md`; delega ao gate da
+  `schematize-engineering` (uma regra só; exit 2 se ausente).
+- P1-10 `scripts/dr-drill.sh`: sem `eval`/`bash -c` (operações do ops como argv no JSON, schema `drill@2`);
+  idade do backup por arquivo OU manifesto (pgBackRest/PITR/bucket); drill é `ops drill`; relatório com
+  commit+push no archive (reprova se não publicar) e campo `custos`; 24 casos.
+- P1-11 `resiliencia.md` §6: ponteiro ao piso 28 (`check-resilience.sh`, 7 testes, M == N); item de custos no
+  relatório do drill.
+- P1-12 `check-isolamento.sh` chama `check-dockerfile.sh`/`check-compose.sh` da `schematize-docker` quando
+  presentes (mínimo local + aviso quando não); fixtures de teste ajustadas ao gate do docker.
+- P2-1 cabeçalho `[0.7.1]` duplicado; P2-2 nota editorial removida de `entrega.md` §5.
+
+### Adicionado
+- Bloco herdado "Herda os pisos 22–29 da `schematize-engineering`" em `SKILL.md` e `assets/CLAUDE.md`.
+
 ## [0.9.0] — 2026-11-01
 Alinha a skill ao piso 29 da `schematize-engineering` v0.34.0 (referenciado, não duplicado): máquina
 de build/teste dev/hml com ponte direta ESCOPADA.
@@ -37,8 +60,6 @@ Alinha a skill aos pisos 22-24 da `schematize-engineering` (referenciados, não 
 
 ### Mantido (piso inalterado)
 - Pisos 1-10, gates e scripts; `description` inalterada.
-
-## [0.7.1]
 
 ## [0.7.1] — 2026-10-14
 Ponteiro para a skill nova `schematize-bots` (piso curto, sem duplicar).

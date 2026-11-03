@@ -11,7 +11,7 @@ minha máquina". Alvo: `${ARGUMENTS:-(detecte pelo repo)}`.
 Confirme o trilho `dev local → teste local verde → GitHub → hml → prd`. **Nada pula etapa**; nada
 vai direto pra hml/prd. **VETADO editar código no servidor** — só artefato promovido do git (commit
 SHA). Hotfix segue o mesmo trilho, acelerado. Ache e sinalize qualquer atalho ("deploy da branch
-local", "editei no prd", "hml recebeu o que não passou no CI").
+local", "editei no prd", "hml recebeu o que não passou no gate").
 
 ## 2. Gate manual onde a casa exige (§2)
 - **Front → deploy manual/gated** (Vercel): disparado deliberadamente (CLI prebuilt / promoção
@@ -22,13 +22,13 @@ local", "editei no prd", "hml recebeu o que não passou no CI").
 
 ## 3. Artefato imutável com proveniência git (§3)
 **Um** artefato (mesma imagem/commit SHA) atravessa hml→prd — **não rebuilda por ambiente**. A tag
-inclui o commit; o deploy só aceita origem git. Build **só no CI**. Config por ambiente vem do
+inclui o commit; o deploy só aceita origem git. Build limpo a partir do git (CI de promoção ou ops; dev/hml de build, §8.1). Config por ambiente vem do
 seed/cofre no deploy, **não** embutida na imagem.
 
 ## 3b. Deploy só do git, ops como gate (`entrega.md` §8, `isolamento.md` §7)
 Cobre e reprova se faltar: **(a) SHA do git** — o deploy informa o SHA/tag exato e o ops, na VPS,
 verifica; HEAD==origin e push feito (piso 22); **(b) vetado** `scp`/`rsync`/`tar|ssh`/`docker
-save|load`/edição remota (piso 23) — grep no pipeline/scripts/histórico de comandos; **(c) IA sem
+save|load`/edição remota (piso 23) — `bash scripts/check-deploy-git.sh .` (pipeline, Makefile, `*.sh`, runbook) e histórico de comandos; **(c) IA sem
 ssh mutável** — só bootstrap mínimo (`git`+clone do ops) e depois o ops; **(d) ops com auditoria** —
 log append-only, agente≠humano, dry-run/plan, confirmação humana p/ destrutivo, kill-switch,
 rollback (piso 24).

@@ -32,13 +32,13 @@ Toda credencial com **política de rotação documentada** (quem/quando/como); *
 não chave estática de longa vida).
 
 ## 4. Scan que trava (§4)
-**Secret scan no CI travando o merge** (gitleaks/trufflehog); `.env` real fora do git
+**Secret scan como gate local por commit, travando a promoção** (gitleaks/trufflehog); `.env` real fora do git
 (`.gitignore` + `.env.example` só placeholder); pre-commit hook como 1ª barreira, mas o **gate é o
 CI**. Token de CI escopado e efêmero, sem admin token.
 
 ## 5. Saída
-Relatório: há segredo no repo/layer/log? cofre em uso? rotação documentada/exercida? scan trava o
-merge? — cada achado com **o quê + onde + severidade + o conserto** (e **rotação** onde houver
+Relatório: há segredo no repo/layer/log? cofre em uso? rotação documentada/exercida? scan trava a
+promoção? — cada achado com **o quê + onde + severidade + o conserto** (e **rotação** onde houver
 exposição). Grave no `<projeto>_archive/`. A prova de que a porta ficou fechada (exposição
 explorável) é da `schematize-pentest`.
 

@@ -30,7 +30,7 @@ agir — não trabalhe de memória. Segurança **ofensiva** (provar que fechou) 
    (ex.: o **front na Vercel**), respeite o gate. Hotfix segue o mesmo trilho, acelerado.
 5. **Segredo nunca no repo.** Nunca em código, layer de imagem, `.env` commitado, `NEXT_PUBLIC_`,
    `ARG`/`ENV`, log. Cofre (Vault/Secret Manager/sealed-secrets) + **rotação documentada** +
-   **secret scan que trava o merge**. Segredo achado no rastro → **rotação imediata**.
+   **secret scan que trava a promoção** (gate local por commit). Segredo achado no rastro → **rotação imediata**.
 6. **Observabilidade integrada, não posterior.** Todo serviço nasce com logs estruturados (sem
    PII), métricas RED/USE, traços por `trace_id`, **SLO com error budget** e alertas versionados.
    Sem `/health` `/ready` `/metrics` + dashboard + alerta + chart, o serviço **não é "pronto"**.
@@ -39,7 +39,7 @@ agir — não trabalhe de memória. Segurança **ofensiva** (provar que fechou) 
    (`down` + backup). Apagar dado é gated, só dev/hml.
 8. **Cadeia de suprimentos de primeira classe.** Lockfile commitado, **SBOM** versionado com o
    artefato, scan que **trava** em `high`/`critical` sem ADR, imagem **pinada por digest**
-   (`@sha256`, nunca `latest`), **assinatura verificada na admissão**. Build só no CI.
+   (`@sha256`, nunca `latest`), **assinatura verificada na admissão**. Build limpo a partir do git (dev/hml de build quando existe, piso 29); CI remoto só na promoção (piso 27).
 9. **Tudo auditado.** Toda operação de infra passa pelo `<project>_ops` e **grava rastro** (§28);
    operação sensível vai pra **trilha de auditoria imutável**. O que não está no ops/IaC **não
    aconteceu**.
@@ -97,6 +97,8 @@ agir — não trabalhe de memória. Segurança **ofensiva** (provar que fechou) 
 ## Orquestração
 
 <!-- herdado:engineering/orquestracao:curto -->**Orquestrador não desenvolve; subagent barato executa.** O agent principal só planeja, despacha e revisa; ação onerosa vira micro-tasks para o executor mais barato que resolve: `haiku` (mecânico) / `sonnet` (código; falhou → mesmo subagent corrige, até 2 rodadas) → Codex `gpt-5.6-terra` → Cursor → subagent `opus` (motivo) → `park`; **visual vai direto ao Codex**; **imagem nunca pelo Claude: detectar Codex/Gemini e perguntar ao usuário qual usar (Codex é a sugestão), nunca API de imagem paga**; papéis em `agentes.toml`. No overdev, cada item do checklist vai a um subagent e o principal revisa antes do `- [x]`. **Sem frota ociosa:** idle com pendência volta ao trabalho; dependente de outro agent → mata e enfileira com gatilho; terminou → mata (§9.6). Detalhe: `schematize-engineering` → `references/orquestracao.md` §9.<!-- /herdado -->
+
+Herda os pisos 22–29 da `schematize-engineering` (git como trava de conclusão, deploy só do git, ops é o gate da IA, sem agents inúteis, relatório 30 min/handoff 6 h, CI remoto só antes do hml, microserviço autônomo, build em dev/hml + higiene).
 
 ## Gestão de contexto (sessões longas)
 

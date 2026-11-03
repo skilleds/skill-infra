@@ -82,11 +82,11 @@ build e dependência como **superfície de ataque de primeira classe** (`cadeia-
 - **SBOM:** gerar (CycloneDX/SPDX) no build e **versionar junto ao artefato** — é o inventário do
   que foi de fato embarcado (`syft`, `cargo cyclonedx`).
 - **Scan que trava:** SAST (Semgrep/CodeQL), SCA (deps + licenças), container scan (Trivy/Grype),
-  secret scan (Gitleaks) — **travam o merge** em `high`/`critical` sem ADR de aceite datado.
+  secret scan (Gitleaks) — **travam a promoção** (gate local + CI de promoção) em `high`/`critical` sem ADR de aceite datado.
   Vulnerabilidade aceita conscientemente vira **ADR com prazo**, não silêncio.
 - **Imagem:** pinada por digest, multi-stage, não-root; rebuild periódico para absorver patch da base —
   o como é da `schematize-docker -> references/dockerfile.md` e `-> references/supply-chain.md`.
-- **Proveniência (SLSA):** **build só no CI** (não na máquina do dev pra prd), a partir do código
+- **Proveniência (SLSA):** **build limpo a partir do git** (CI de promoção/ops; nunca da máquina do dev pra prd), a partir do código
   versionado — o pipeline é parte da TCB. **Assinar** o artefato/imagem (cosign/sigstore) e
   **verificar a assinatura na admissão** (deploy só aceita imagem assinada por pipeline confiável —
   assinar sem verificar não protege). **Atestação de build**: quem buildou, de qual commit, com

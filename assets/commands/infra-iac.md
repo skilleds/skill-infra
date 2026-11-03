@@ -31,7 +31,7 @@ legítima **vira código**. Filesystem read-only em hml/prd; escrita = **break-g
 
 ## 4. Artefato imutável / GitOps (§5)
 O git é a fonte da verdade do estado desejado; o cluster == o git. Deploy consome a **mesma imagem/
-commit SHA** do CI (`/infra-deploy`). **Redeploy nasce do seed e é destrutivo na app, nunca nos
+commit SHA** promovida pelo gate (`/infra-deploy`). **Redeploy nasce do seed e é destrutivo na app, nunca nos
 dados**; dado só muda por **migration reversível** (`down`+backup).
 
 ## 5. O `<projeto>_ops` é a interface única (§6)

@@ -13,7 +13,7 @@ mesmo trilho, acelerado.
 ## 1. O fluxo de promoção — fixo, sem atalho
 
 ```
-desenvolvimento local  →  teste local (verde)  →  GitHub (merge)  →  hml  →  prd
+desenvolvimento local  →  teste local (gate local por commit)  →  GitHub (push)  →  CI remoto uma vez (tag hml-*)  →  hml  →  prd
 ```
 
 - **Nada pula etapa.** hml só recebe o que está no GitHub e passou no teste local; prd só recebe o
@@ -32,18 +32,18 @@ Nem todo deploy é automático — a casa **gateia** onde quer controle:
   prebuilt / promoção manual), não em todo push. Respeite o gate — é decisão da casa, não fricção
   a "consertar" ligando auto-deploy.
 - **prd é sempre gated:** promoção com **aprovação humana** (environment protection do GitHub
-  Actions, approval no pipeline). O CI **constrói e testa** sozinho; **promover pra prd** pede o
-  portão.
+  Actions, approval no pipeline). O **gate local** constrói e testa por commit; o CI remoto roda **uma vez** na promoção a hml
+  (§9); **promover pra prd** pede o portão.
 - **`apply` de IaC em prd é gated** (`iac.md`): plan revisado → aprovação → apply.
 - O gate é **auditável**: quem aprovou, qual artefato, qual commit — no archive.
 
 ## 3. Artefato imutável com proveniência git
 
-- **Um artefato, todos os ambientes.** A **mesma imagem/commit SHA** que passou no CI vai pra hml
+- **Um artefato, todos os ambientes.** A **mesma imagem/commit SHA** que passou no gate (local + CI de promoção) vai pra hml
   e depois pra prd — não se rebuilda por ambiente (rebuild = artefato diferente = teste inválido).
 - **Proveniência:** a tag da imagem **inclui o commit**; o deploy só aceita artefato com **origem
-  git** (SHA). Build **só no CI**, nunca na máquina do dev pra produção (`resiliencia.md` §
-  supply-chain).
+  git** (SHA). Build **limpo a partir do git** (CI de promoção ou ops), nunca da máquina do dev pra
+  produção (`resiliencia.md` § supply-chain; máquina dev/hml de build: §8.1).
 - **Config por ambiente vem do seed/secret manager** no deploy, não embutida na imagem — a imagem
   é a mesma; o que muda é a config injetada (`segredos.md`, `iam` do ambiente).
 - **Provider de efeito externo é config de AMBIENTE, resolvida uma vez na composição:** fora de
@@ -58,7 +58,7 @@ A imagem (Dockerfile, multi-stage, base mínima pinada por digest, não-root, `.
 segredo de build pelo BuildKit), o SBOM/provenance, o scan que trava, a assinatura cosign e a tag
 imutável = sha do git são da **`schematize-docker`**: `schematize-docker -> references/dockerfile.md`
 e `schematize-docker -> references/supply-chain.md`. Esta skill cobra o que fica do lado da
-entrega: o deploy consome **só** a imagem assinada, por **digest**, promovida do CI, e **verifica a
+entrega: o deploy consome **só** a imagem assinada, por **digest**, promovida do gate de promoção, e **verifica a
 assinatura na admissão** (`resiliencia.md`).
 
 ## 5. Orquestração e estratégia de deploy
@@ -70,9 +70,7 @@ partida: ele paga quando há **escala horizontal real, muitos serviços e time q
 e cobra caro quando é adotado por um punhado de serviços, porque você troca "um systemd que você
 entende" por um plano de controle inteiro para manter, atualizar e depurar às 3h da manhã.
 
-*(As duas frases desta skill divergiam: aqui se fixava "Kubernetes + Helm" e lá se descrevia
-bare-metal/systemd como padrão. A ordem agora é uma só — e ela vale para as duas leituras: **a
-estratégia de deploy abaixo independe do alvo**.)*
+**A estratégia de deploy abaixo independe do alvo** (systemd/container ou k8s).
 
 A estratégia casa com o risco:
 
@@ -100,11 +98,11 @@ A estratégia casa com o risco:
 
 ## 7. Pipeline como base de confiança (TCB)
 
-- **Build e teste no CI** (GitHub Actions), a partir do código versionado. O pipeline **é parte da
-  base de confiança** — trate-o como produção.
+- **Build e teste a partir do código versionado:** gate local por commit + CI remoto na promoção
+  (GitHub Actions, gatilho do §9). O pipeline **é parte da base de confiança** — trate-o como produção.
 - **Permissões mínimas no CI:** token escopado, sem segredo amplo; segredo via mecanismo efêmero,
-  **nunca** em log de build (`segredos.md`). Secret scan + SAST + SCA + container scan travando o
-  merge em `high`/`critical` (`resiliencia.md` § supply-chain).
+  **nunca** em log de build (`segredos.md`). Secret scan + SAST + SCA + container scan travando a
+  promoção em `high`/`critical` (`resiliencia.md` § supply-chain).
 - **Cada deploy grava rastro** no archive (§28): commit, artefato, quem aprovou, resultado.
 
 ## 8. Deploy SOMENTE do git — pisos 22 e 23 (`schematize-engineering`)
@@ -141,7 +139,30 @@ Dois papéis que não se misturam (base: `schematize-engineering` piso 29 e `ref
   padrão**, escopo = workspace + allowlist, **nunca** dado persistente — medindo disco antes/depois.
   O isolamento e a limpeza agendada da máquina estão em `isolamento.md` §7.1.
 
-> Regra de bolso: **promova, não copie.** Um artefato imutável, provado no CI, sobe por estágios
+> Regra de bolso: **promova, não copie.** Um artefato imutável, provado no gate, sobe por estágios
 > com portão onde a casa quer olhar (prd, front). Nada pula etapa; nada é editado no servidor;
 > rollback é voltar pro artefato anterior — nunca mexer na mão.
 > E o artefato **só chega ao servidor por pull do git feito pelo ops** — nunca por push da máquina.
+
+## 9. CI remoto — gatilho padrão (piso 27 da `schematize-engineering`)
+
+Não existe "check obrigatório no PR". O gate **por commit é local** (`tools/ci.sh`/pre-commit: lint,
+teste, secret scan, `scripts/check-deploy-git.sh`); o CI remoto é caro e roda **uma vez**, antes de
+promover a hml, em release/tag ou quando o usuário pedir. Gatilho padrão de TODO workflow:
+
+```yaml
+on:
+  workflow_dispatch:
+  push:
+    tags: ["hml-*", "v*"]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+- **VETADO** `on: pull_request` (com ou sem filtro), `on: push` em branch, `workflow_run` e `schedule`
+  sem `# justificativa:` (cron exige motivo escrito). Gate de máquina:
+  `schematize-engineering` → `scripts/check-ci-triggers.sh <dir-dos-workflows>`.
+- O **ops** dispara o CI uma vez por promoção (tag `hml-*`); `apply` de IaC e deploy de prd continuam
+  gated por aprovação humana (§2). Imagem só é publicada/assinada em tag.
+- "Trava a promoção" = o ops/tag não avança sem o gate verde; **não** "trava o merge".

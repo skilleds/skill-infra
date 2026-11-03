@@ -41,7 +41,7 @@ gate gritar em todo repo e treinar todo mundo a ignorá-lo.
 
 Além dos scripts, cobre à mão (`references/entrega.md` §8, `references/isolamento.md` §7):
 **"SHA do git"** (deploy por SHA/tag verificado pelo ops, push feito, HEAD==origin) · **"IA sem ssh
-mutável"** (nenhum `scp`/`rsync`/`tar|ssh`/`docker save|load` no repo, CI ou runbook; IA só com
+mutável"** (`bash scripts/check-deploy-git.sh .` — nenhum `scp`/`rsync`/`tar|ssh`/`docker save|load` no repo, CI ou runbook; IA só com
 bootstrap mínimo + ops) · **"ops com auditoria"** (allowlist tipada, dry-run, confirmação humana p/
 destrutivo, log append-only, agente≠humano, kill-switch, rollback, leitura de banco só por query
 nomeada). Violação é achado, não nota.
@@ -64,3 +64,9 @@ cronômetro.
 `bash .claude/skills/schematize-infra/scripts/check-gates.test.sh` — 13 casos, 11 vermelhos de
 propósito (User=root, unit sem hardening, Dockerfile sem USER, banco publicado, readiness apelido do
 liveness, senha e `authorization` em log, e os dois casos de "não passa por vacuidade").
+
+## Gatilho de CI e piso 28
+Cobre também: workflows com o gatilho padrão (`workflow_dispatch` + tags `hml-*`/`v*`; sem
+`pull_request`/`push` em branch/cron sem justificativa — `schematize-engineering` →
+`scripts/check-ci-triggers.sh`, `entrega.md` §9) e, por serviço, o piso 28 (`resilience.yml`, fila durável
+e DLQ provisionadas, `scripts/check-resilience.sh` da engineering; `resiliencia.md` §6).

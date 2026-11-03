@@ -3,7 +3,7 @@
 
 > Segredo é a chave do reino. A casa trata segredo como **radioativo**: nunca no repo, nunca em
 > layer de imagem, nunca em `.env` commitado; mora em **cofre**, é **rotacionado**, e um **secret
-> scan trava o merge** antes do vazamento. Este reference é o *como* do piso "segredo nunca no
+> scan trava a promoção** antes do vazamento. Este reference é o *como* do piso "segredo nunca no
 > cliente/no repo" da `schematize-engineering` (seguranca.md §13.4, cadeia-suprimentos.md §S5).
 
 Se o cliente pode ver, o atacante já viu. Se está no git, está no histórico **pra sempre** (mesmo
@@ -50,14 +50,15 @@ solução, é **vazamento agendado**.
 - **Credencial de curta duração** onde der (tokens de IAM de nuvem via OIDC/workload identity, não
   chave estática de longa vida). Menos tempo de vida = menos janela de abuso.
 
-## 4. Secret scan — trava antes do merge
+## 4. Secret scan — trava antes da promoção
 
-- **Secret scan no pipeline** (gitleaks / trufflehog) **travando o merge** — pega o segredo
+- **Secret scan como gate local por commit** (`tools/ci.sh`/pre-commit: gitleaks / trufflehog) **travando
+  o commit e a promoção**, e repetido no CI remoto único de promoção (`entrega.md` §9) — pega o segredo
   **antes** de entrar no histórico. `.env` real fica **fora do git** (`.gitignore` + `.env.example`
   só com placeholders).
 - **Scan do histórico** periodicamente (o segredo pode ter entrado antes do scan existir).
-- **Pre-commit hook** local como primeira barreira (defesa em profundidade) — mas o gate **é o
-  CI**, não a boa vontade do dev.
+- **Pre-commit hook** é a primeira barreira, mas o gate é o **script versionado** (`tools/ci.sh`) que roda
+  por commit e no CI de promoção — não a boa vontade do dev.
 
 ## 5. Vazou — o procedimento (rotação imediata)
 
