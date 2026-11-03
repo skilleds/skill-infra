@@ -104,6 +104,13 @@ build e dependência como **superfície de ataque de primeira classe** (`cadeia-
   timeout, uma dependência lenta vira thread exhaustion e o serviço inteiro trava.
 - **Limite de recurso** (`MemoryMax`/limits do k8s) — um serviço em loop não estrangula o host
   (`isolamento.md` §2).
+- **Microserviço autônomo — piso 28 da `schematize-engineering`:** fila durável entre serviços e os
+  **7 testes de resiliência** (boot sem dependências, dependência indisponível, restart com fila
+  cheia, reentrega idempotente, DLQ envenenada, shutdown gracioso, crash entre persistir e
+  confirmar), com a matriz **M == N** (M dependências declaradas em `resilience.yml`, N testes de
+  indisponibilidade). Gate: `schematize-engineering` → `scripts/check-resilience.sh <dir-do-serviço>`;
+  o como, em `references/testes.md`. Esta skill cobra a infra que sustenta isso (fila e DLQ
+  provisionadas, alerta de profundidade, retenção) e o chaos da §7 que exercita o que o teste não alcança.
 
 > Regra de bolso: **backup só conta depois do restore provado; a porta só conta fechada por
 > padrão; o artefato só conta se você sabe exatamente o que tem dentro e quem o produziu.** RPO/RTO
@@ -144,18 +151,34 @@ graciosa (§6). Sem hipótese escrita antes, é sabotagem com relatório.
   nenhuma, ou o serviço não a usava, ou a injeção não pegou. *"Nada aconteceu" é resultado
   inválido, não sucesso* — a mesma disciplina do verde-mentiroso.
 
+**Quem executa (pisos 15 e 24):** chaos em VPS (hml ou prd) é **operação tipada do ops**, executada
+**pelo ops** com guardrails — nunca `systemctl`, `docker stop` ou ssh mutável disparados pela IA ou
+por script solto. A IA escreve o **experimento** (arquivo versionado no git: hipótese, alvo, raio,
+oráculo) e **pede** a operação nomeada; quem muta o ambiente é o ops. Guardrails obrigatórios da
+operação: `--ttl` (a injeção expira sozinha e o ops reverte), **allowlist** de serviço/ambiente
+(`prd` fora da lista por padrão), **auditoria** append-only (quem pediu, qual experimento, qual SHA),
+**kill-switch** (`ops chaos abort`) e **abort automático** se o SLO estourar o limite do experimento.
+Única exceção de ponte direta: a **máquina dev/hml de build/teste** do piso 29 (workspace de build,
+sem dado nem segredo de prd) — e ali também o experimento é versionado e tem TTL.
+
 **Exemplo executável (o mínimo viável, sem plataforma de chaos):**
 
+```yaml
+# chaos/payments-fora.yml — versionado no git; o ops executa, a IA só pede a operação nomeada.
+experimento: payments-fora
+hipotese: com o `payments` fora, /checkout degrada para 503 e nenhum pedido se perde.
+env: hml                    # allowlist do ops; prd exige as cinco condições abaixo
+injecao: { op: chaos.stop, servico: payments, ttl: 60s }   # raio: 1 serviço, 60s; reverte sozinho
+oraculo:
+  - { op: health, espera: "checkout=503" }
+  - { op: queue.depth, fila: orders, espera: "retida (nao descartada)" }
+  - { op: health, depois: 30s, espera: "igual ao estado estavel anterior" }
+abort: { slo_burn_rate: 6, kill_switch: "ops chaos abort payments-fora" }
+```
+
 ```bash
-# hipótese: com o `payments` fora, /checkout degrada para 503 e nenhum pedido se perde.
-ops health --json > /tmp/antes.json                      # 1) estado estável
-systemctl stop payle-payments                            # 2) injeção escopada
-sleep 60                                                 # 3) raio: 60s, 1 serviço, hml
-curl -s -o /dev/null -w '%{http_code}\n' "$API/checkout"  # espera 503
-ops queue depth --queue orders                           # espera: reteve, não descartou
-systemctl start payle-payments                           # 4) reverte SEMPRE
-sleep 30 && ops health --json > /tmp/depois.json          # 5) voltou sozinho?
-diff <(jq -S . /tmp/antes.json) <(jq -S . /tmp/depois.json)
+ops chaos run chaos/payments-fora.yml --env hml    # o ops valida allowlist, grava auditoria e reverte no TTL
+ops chaos report payments-fora --json              # antes/depois, veredito e trilha de auditoria
 ```
 
 **Gate de segurança (inegociável):**
@@ -163,7 +186,8 @@ diff <(jq -S . /tmp/antes.json) <(jq -S . /tmp/depois.json)
 - **Nunca em `prd` sem as cinco condições:** ADR aprovado, janela combinada, dono de plantão
   presente, raio declarado e mecanismo de abort **testado antes**. Sem as cinco, chaos é `dev`/`hml`.
 - O test kit exige `<PROJECT>_CHAOS_ALLOW=1` **e** aprovação do plano (`/qa-plan`) — dois gates,
-  porque a variável sozinha é fácil demais de exportar sem pensar.
+  porque a variável sozinha é fácil demais de exportar sem pensar. Em VPS, o terceiro gate é a
+  allowlist do ops.
 - **Efeito externo continua valendo:** derrubar serviço não autoriza envio real
   (`schematize-engineering` → `references/efeitos-externos.md`).
 - **Todo experimento vira registro** em `<projeto>_archive/` — hipótese, resultado, e o que mudou
