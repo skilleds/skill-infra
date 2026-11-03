@@ -1,0 +1,33 @@
+{
+  "schema": "schematize-infra/drill@2",
+  "dado": "pedidos",
+  "_comentario": "Copie para o repo do servico. O drill e OPERACAO DO OPS (ops drill <dado>): cada operacao e um array argv de operacao NOMEADA do ops (sem string de shell, sem eval). A IA nao roda isto na mao.",
+  "ops": "ops",
+  "rpo_minutos": 60,
+  "rto_minutos": 30,
+  "relatorios": "../projeto_archive/infra/drills",
+  "canario": "pedido-canario-do-drill",
+  "custos": {
+    "_comentario": "preencha: custo do ambiente do drill, storage/retencao do backup, egress",
+    "drill_ambiente_brl": 0,
+    "storage_mensal_brl": 0,
+    "egress_brl": 0
+  },
+  "operacoes": {
+    "backup_mais_recente": [
+      "drill",
+      "backup-latest",
+      "pedidos"
+    ],
+    "restaurar": [
+      "drill",
+      "restore",
+      "pedidos"
+    ],
+    "verificar": [
+      "drill",
+      "verify",
+      "pedidos"
+    ]
+  }
+}
