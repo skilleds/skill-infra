@@ -5,6 +5,10 @@
 # um user dedicado por servico, unit hardened, container nao-root e read-only, e nada de banco
 # publicado na rede. Nao inspeciona servidor: cobra o que esta versionado, que e onde a decisao mora.
 #
+# Dockerfile e compose: a regra é da `schematize-docker` (scripts/check-dockerfile.sh e check-compose.sh).
+# Quando a skill está disponível, este gate CHAMA os dela (uma regra só, sem divergir); quando não está,
+# cobra o mínimo local (USER não-root; banco sem ports:) e avisa. SCHEMATIZE_DOCKER_DIR aponta a skill.
+#
 # uso: check-isolamento.sh [dir]   ·   exit 0 = passa · 1 = REPROVA · 2 = nada para checar
 # EXCEÇÃO DECLARADA de strict mode (`schematize-shell` -> `references/piso.md` secao 1):
 # este script é um COLETOR — ele varre tudo e SOMA os achados. Com `set -e` abortaria no
@@ -26,6 +30,26 @@ if [ -z "$units$dockerfiles$composes" ]; then
   exit 2
 fi
 
+AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+docker_scripts=""
+for c in "${SCHEMATIZE_DOCKER_DIR:+$SCHEMATIZE_DOCKER_DIR/scripts}" "$AQUI/../../schematize-docker/scripts" "$AQUI/../../skill-docker/scripts" "$HOME/.claude/skills/schematize-docker/scripts"; do
+  [ -n "$c" ] && [ -f "$c/check-dockerfile.sh" ] && [ -f "$c/check-compose.sh" ] && { docker_scripts="$c"; break; }
+done
+delegado=0
+if [ -n "$docker_scripts" ] && [ -n "$dockerfiles$composes" ]; then
+  delegado=1
+  if [ -n "$dockerfiles" ]; then
+    out=$(bash "$docker_scripts/check-dockerfile.sh" --no-hadolint "$raiz" 2>&1); z=$?
+    [ "$z" -eq 1 ] && erros+=("Dockerfile reprovado pelo gate da schematize-docker: $(printf '%s' "$out" | grep -E '^  · ' | head -5 | sed 's/^  · //' | tr '\n' ';')")
+  fi
+  if [ -n "$composes" ]; then
+    out=$(bash "$docker_scripts/check-compose.sh" "$raiz" 2>&1); z=$?
+    [ "$z" -eq 1 ] && erros+=("compose reprovado pelo gate da schematize-docker: $(printf '%s' "$out" | grep -E '^  · ' | head -5 | sed 's/^  · //' | tr '\n' ';')")
+  fi
+elif [ -n "$dockerfiles$composes" ]; then
+  avisos+=("gate da schematize-docker não encontrado: checagem MÍNIMA local de Dockerfile/compose (instale a skill para a regra completa)")
+fi
+
 for u in $units; do
   nome="$(basename "$u")"
   user=$(grep -oP '^\s*User\s*=\s*\K\S+' "$u" | tail -1)
@@ -44,6 +68,7 @@ for u in $units; do
 done
 
 for f in $dockerfiles; do
+  [ "$delegado" = 1 ] && break
   nome="${f#$raiz/}"
   user=$(grep -oP '^\s*USER\s+\K\S+' "$f" | tail -1)
   if [ -z "$user" ]; then erros+=("$nome: sem USER — container roda como root por default")
@@ -53,6 +78,7 @@ for f in $dockerfiles; do
 done
 
 for c in $composes; do
+  [ "$delegado" = 1 ] && break
   nome="${c#$raiz/}"
   grep -qE '^\s*read_only:\s*true' "$c" || avisos+=("$nome: nenhum servico com read_only: true")
   grep -qE '^\s*cap_drop:' "$c" || avisos+=("$nome: nenhum cap_drop:")

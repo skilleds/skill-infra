@@ -18,7 +18,7 @@ unit_ok() { printf '[Service]\nUser=svc-app\nNoNewPrivileges=yes\nProtectSystem=
 
 echo "── limpo passa"
 d="$W/limpo"; mkdir -p "$d"; unit_ok "$d/app.service"
-printf 'FROM scratch\nUSER 10001\nHEALTHCHECK CMD true\n' > "$d/Dockerfile"
+printf 'FROM scratch\nUSER 10001\nHEALTHCHECK CMD true\n' > "$d/Dockerfile"; printf '.git\n.env\n' > "$d/.dockerignore"
 caso "unit + Dockerfile conformes" 0 "$d" "piso cumprido"
 
 echo "── vermelhos plantados"
@@ -31,9 +31,17 @@ caso "unit sem ProtectSystem" 1 "$d" "falta ProtectSystem"
 d="$W/semuserdock"; mkdir -p "$d"; printf 'FROM scratch\n' > "$d/Dockerfile"
 caso "Dockerfile sem USER" 1 "$d" "sem USER"
 d="$W/dockroot"; mkdir -p "$d"; printf 'FROM scratch\nUSER root\n' > "$d/Dockerfile"
-caso "Dockerfile USER root" 1 "$d" "nao-root"
+caso "Dockerfile USER root" 1 "$d" "USER root"
 d="$W/banco"; mkdir -p "$d"; printf 'services:\n  db:\n    image: postgres:17\n    ports:\n      - "5432:5432"\n' > "$d/compose.yaml"
-caso "banco com ports: publicado" 1 "$d" "ports: publicado"
+caso "banco com ports: publicado (via gate do docker)" 1 "$d" "porta publicada"
+
+echo "── sem a skill docker: fallback mínimo local, com aviso (sem acoplar)"
+mkdir -p "$W/iso/a/b/scripts"; cp "$G" "$W/iso/a/b/scripts/check-isolamento.sh"
+out=$(HOME="$W/iso" bash "$W/iso/a/b/scripts/check-isolamento.sh" "$d" 2>&1); z=$?; n=$((n+1))
+if [ "$z" -eq 1 ] && grep -q "ports: publicado" <<<"$out" && grep -q "MÍNIMA local" <<<"$out"; then echo "  ✔ fallback local reprova banco com ports: e avisa"; else echo "  ✖ fallback: exit $z: $out"; rc=1; fi
+d="$W/semuserdock2"; mkdir -p "$d"; printf 'FROM scratch\n' > "$d/Dockerfile"
+out=$(HOME="$W/iso" bash "$W/iso/a/b/scripts/check-isolamento.sh" "$d" 2>&1); z=$?; n=$((n+1))
+if [ "$z" -eq 1 ] && grep -q "sem USER" <<<"$out"; then echo "  ✔ fallback local reprova Dockerfile sem USER"; else echo "  ✖ fallback USER: exit $z: $out"; rc=1; fi
 
 echo "── fail-closed"
 d="$W/vazio"; mkdir -p "$d"

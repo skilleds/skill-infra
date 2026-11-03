@@ -29,7 +29,7 @@ U
 
 echo "== isolamento =="
 d="$TMP/iso-ok"; mkdir -p "$d"; unit_bom "$d/pedidos.service"
-printf 'FROM alpine\nRUN adduser -D app\nUSER app\nHEALTHCHECK CMD wget -q -O- localhost:8080/healthz\n' > "$d/Dockerfile"
+printf 'FROM alpine:3.20@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nRUN adduser -D app\nUSER app\nHEALTHCHECK CMD wget -q -O- localhost:8080/healthz\n' > "$d/Dockerfile"; printf '.git\n.env\n' > "$d/.dockerignore"
 checa "repo com unit hardened + container nao-root passa" 0 "piso cumprido" bash "$ISO" "$d"
 
 d="$TMP/iso-vazio"; mkdir -p "$d"; echo "# so prosa" > "$d/README.md"
@@ -56,7 +56,7 @@ services:
     ports:
       - "5432:5432"
 C
-checa "banco publicado no host reprova" 1 "rede deny-by-default" bash "$ISO" "$d"
+checa "banco publicado no host reprova" 1 "porta publicada" bash "$ISO" "$d"
 
 echo "== observabilidade =="
 d="$TMP/obs-ok"; mkdir -p "$d"
