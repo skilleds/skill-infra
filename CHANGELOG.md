@@ -23,7 +23,7 @@ com versionamento [SemVer](https://semver.org/lang/pt-BR/).
 - P1-12 `check-isolamento.sh` chama `check-dockerfile.sh`/`check-compose.sh` da `schematize-docker` quando
   presentes (mínimo local + aviso quando não); fixtures de teste ajustadas ao gate do docker.
 - P2-1 cabeçalho `[0.7.1]` duplicado; P2-2 nota editorial removida de `entrega.md` §5.
-
+- `check-deploy-git.sh` com `set -euo pipefail`; `SC1007` (`VAR= cmd` -> `VAR='' cmd`) nos testes; fixtures de rsync/ssh do teste com `# shell-ok` (são a ENTRADA do gate).
 ### Adicionado
 - Bloco herdado "Herda os pisos 22–29 da `schematize-engineering`" em `SKILL.md` e `assets/CLAUDE.md`.
 

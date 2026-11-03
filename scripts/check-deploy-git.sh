@@ -6,7 +6,7 @@
 # Fail-closed: se o gate da engineering não for achado, sai 2 (sem gate não há "passou").
 # uso: check-deploy-git.sh [dir]   (SKIP_GIT=1 pula a parte de git; SCHEMATIZE_ENGINEERING_DIR aponta a skill)
 # exit: 0 ok · 1 violação · 2 gate da engineering ausente
-set -uo pipefail
+set -euo pipefail
 AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cands=()
 [ -n "${SCHEMATIZE_ENGINEERING_DIR:-}" ] && cands+=("$SCHEMATIZE_ENGINEERING_DIR/scripts/check-deploy-git.sh")

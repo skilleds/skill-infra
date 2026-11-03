@@ -123,10 +123,10 @@ git init -q "$TMP/archive"; git -C "$TMP/archive" remote add origin "$TMP/remoto
 git -C "$TMP/archive" config user.email t@t; git -C "$TMP/archive" config user.name t
 git -C "$TMP/archive" commit -q --allow-empty -m init; git -C "$TMP/archive" push -q -u origin HEAD 2>/dev/null
 cfg "$TMP/pub.json" "d['relatorios']='$TMP/archive/drills'; d['custos']={'storage_mensal_brl':12}"
-DR_NO_COMMIT= checa "drill publica o relatorio" 0 "relatorio publicado" bash "$DRILL" "$TMP/pub.json"
+DR_NO_COMMIT='' checa "drill publica o relatorio" 0 "relatorio publicado" bash "$DRILL" "$TMP/pub.json"
 checa "HEAD do archive == origin" 0 "" test "$(git -C "$TMP/archive" rev-parse HEAD)" = "$(git -C "$TMP/remoto.git" rev-parse HEAD)"
 checa "relatorio carrega custos" 0 "" grep -q storage_mensal_brl "$TMP"/archive/drills/drill-*.json
 cfg "$TMP/fora.json" "d['relatorios']='$TMP/solto/drills'"
-DR_NO_COMMIT= checa "relatorio fora de repo git reprova" 1 "fora de repo git" bash "$DRILL" "$TMP/fora.json"
+DR_NO_COMMIT='' checa "relatorio fora de repo git reprova" 1 "fora de repo git" bash "$DRILL" "$TMP/fora.json"
 
 echo; echo "dr-drill: $ok ok, $fail falha(s)"; [ "$fail" = 0 ]
